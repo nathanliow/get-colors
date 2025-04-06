@@ -1,103 +1,322 @@
-import Image from "next/image";
+'use client'
+
+import React, { useState, useEffect } from "react";
+import { 
+  Input, 
+  Button as ChakraButton, 
+  Heading,
+  Box, 
+  Text, 
+  Badge
+} from "@chakra-ui/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { ColorSwatch } from "@/components/ColorSwatch";
+import { updateWebsiteTheme, useWebsitePalette, WebsitePalette } from "@/lib/websiteTheme";
+import { WebsiteData } from "@/utils/interfaces";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [url, setUrl] = useState("");
+  const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { palette, shuffleColors } = useWebsitePalette();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  // Update the theme when websiteData changes
+  useEffect(() => {
+    if (websiteData?.colors) {
+      // Pass both palette and favicon colors to let the utility handle fallback
+      updateWebsiteTheme(
+        websiteData.colors.palette, 
+        websiteData.colors.favicon
+      );
+    }
+  }, [websiteData]);
+
+  const fetchColors = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/colors", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch colors");
+      }
+      
+      if (!data.colors || !data.colors.palette) {
+        throw new Error("Could not extract color palette from this website");
+      }
+      
+      setWebsiteData(data);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      setWebsiteData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle color refresh
+  const handleRefreshColors = () => {
+    if (websiteData?.colors?.palette) {
+      const shuffled = shuffleColors();
+      console.log("Shuffled palette:", shuffled);
+    }
+  };
+
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen p-8 gap-8">
+      <h1 className="text-3xl font-bold">Website Color Extractor</h1>
+      <div className="flex gap-2 w-full max-w-md">
+        <Input
+          placeholder="Enter website URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+        <Button onClick={fetchColors} disabled={loading}>
+          {loading ? "Loading..." : "Get Colors"}
+        </Button>
+      </div>
+
+      {error && (
+        <div className="w-full max-w-md p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+          {error}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      )}
+
+      {websiteData && websiteData.colors && websiteData.colors.palette && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="w-full max-w-4xl space-y-8"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <div className="text-center">
+            <h2 className="text-2xl font-bold">{websiteData.title}</h2>
+            {(websiteData.faviconBase64 || websiteData.favicon) && (
+              <div className="flex justify-center my-4">
+                <img 
+                  src={websiteData.faviconBase64 || websiteData.favicon} 
+                  alt="Website Favicon" 
+                  className="w-12 h-12 object-contain border rounded-md"
+                  onError={(e) => {
+                    // If base64 doesn't work, try URL directly as fallback
+                    if (
+                      websiteData.faviconBase64 && 
+                      websiteData.favicon && 
+                      websiteData.faviconBase64 !== websiteData.favicon
+                    ) {
+                      console.log('Base64 favicon failed, trying URL');
+                      (e.target as HTMLImageElement).src = websiteData.favicon;
+                    } else {
+                      // Hide image on error
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }
+                  }}
+                />
+              </div>
+            )}
+            <p className="text-gray-600">{websiteData.description}</p>
+          </div>
+
+
+          <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-4">
+              <h3 className="text-xl font-semibold">Primary Palette</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                {Object.values(websiteData.colors.palette).every(value => value === "") ? (
+                  <p className="text-gray-500 col-span-full">No primary colors extracted</p>
+                ) : (
+                  Object.entries(websiteData.colors.palette).map(([key, value]) => (
+                    value !== "" && (
+                      <ColorSwatch key={key} color={value} label={key} />
+                    )
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <h3 className="text-xl font-semibold mb-4">Favicon Colors</h3>
+              {websiteData.colors.favicon.length > 0 ? (
+                <div className="p-4 rounded-md">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+                    {websiteData.colors.favicon.map((color, index) => (
+                      color !== "" && (
+                        <ColorSwatch key={`favicon-${index}`} color={color} />
+                      )
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500">No favicon colors extracted</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <h3 className="text-xl font-semibold mb-4">CSS Colors</h3>
+              {websiteData.colors.css && websiteData.colors.css.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                  {websiteData.colors.css.map((color, index) => (
+                    <ColorSwatch key={`css-${index}`} color={color} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No CSS colors extracted</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-4 w-full p-8">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">Color Usage Examples</h3>
+                <Button onClick={handleRefreshColors}>Shuffle Colors</Button>
+              </div>
+              
+              {/* Chakra UI Components */}
+              <div>
+                <h4 className="text-lg font-semibold mb-4">Chakra UI Components</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Cards */}
+                  <div className="border rounded-md overflow-hidden">
+                    <div 
+                      style={{
+                        backgroundColor: palette.primary || websiteData.colors.palette.primary,
+                        color: palette.text || websiteData.colors.palette.text,
+                        padding: "1rem"
+                      }}
+                    >
+                      <Heading size="md">Primary Card</Heading>
+                      <Text mt={2}>This is a card using the primary color.</Text>
+                    </div>
+                  </div>
+                  
+                  <div className="border rounded-md overflow-hidden">
+                    <div 
+                      style={{
+                        backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
+                        color: palette.text || websiteData.colors.palette.text,
+                        padding: "1rem"
+                      }}
+                    >
+                      <Heading size="md">Secondary Card</Heading>
+                      <Text mt={2}>This is a card using the secondary color.</Text>
+                    </div>
+                  </div>
+                  
+                  {/* Buttons */}
+                  <div>
+                    <div className="flex gap-4 mb-4">
+                      <ChakraButton 
+                        style={{
+                          backgroundColor: palette.primary || websiteData.colors.palette.primary,
+                          color: palette.text || websiteData.colors.palette.text
+                        }}
+                      >
+                        Primary
+                      </ChakraButton>
+                      <ChakraButton 
+                        style={{
+                          backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
+                          color: palette.text || websiteData.colors.palette.text
+                        }}
+                      >
+                        Secondary
+                      </ChakraButton>
+                      <ChakraButton 
+                        style={{
+                          backgroundColor: palette.accent || websiteData.colors.palette.accent,
+                          color: palette.text || websiteData.colors.palette.text
+                        }}
+                      >
+                        Accent
+                      </ChakraButton>
+                    </div>
+                    
+                    {/* Badges */}
+                    <div className="flex gap-4 mb-4">
+                      <Badge 
+                        style={{
+                          backgroundColor: palette.primary || websiteData.colors.palette.primary,
+                          color: palette.text || websiteData.colors.palette.text,
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: "0.375rem"
+                        }}
+                      >
+                        Primary Badge
+                      </Badge>
+                      <Badge 
+                        style={{
+                          backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
+                          color: palette.text || websiteData.colors.palette.text,
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: "0.375rem"
+                        }}
+                      >
+                        Secondary Badge
+                      </Badge>
+                      <Badge 
+                        style={{
+                          backgroundColor: palette.accent || websiteData.colors.palette.accent,
+                          color: palette.text || websiteData.colors.palette.text,
+                          padding: "0.25rem 0.75rem",
+                          borderRadius: "0.375rem"
+                        }}
+                      >
+                        Accent Badge
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {/* Combined component */}
+                  <div 
+                    className="border rounded-md p-5"
+                    style={{
+                      backgroundColor: palette.primary || websiteData.colors.palette.primary,
+                      color: palette.text || websiteData.colors.palette.text
+                    }}
+                  >
+                    <Heading size="sm" mb={2}>Component Card</Heading>
+                    <Text mb={4}>Combined components using palette colors</Text>
+                    <hr className="my-4" />
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
+                        style={{
+                          backgroundColor: palette.accent || websiteData.colors.palette.accent,
+                          color: palette.text || websiteData.colors.palette.text
+                        }}
+                      >
+                        JD
+                      </div>
+                      <div>
+                        <Text fontWeight="bold">John Doe</Text>
+                        <Text fontSize="sm">Team Member</Text>
+                      </div>
+                      <ChakraButton 
+                        size="sm"
+                        style={{
+                          backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
+                          color: palette.text || websiteData.colors.palette.text
+                        }}
+                      >
+                        View
+                      </ChakraButton>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </main>
   );
 }
