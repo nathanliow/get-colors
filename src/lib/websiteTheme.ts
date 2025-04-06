@@ -2,7 +2,7 @@
  * Website theme utilities for dynamic color management
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export type WebsitePalette = {
   primary: string;
@@ -21,6 +21,14 @@ const initialPalette: WebsitePalette = {
 
 // Global palette store
 let currentPalette = { ...initialPalette };
+
+// Event system to notify subscribers when palette changes
+type PaletteListener = (palette: WebsitePalette) => void;
+const listeners: PaletteListener[] = [];
+
+const notifyListeners = () => {
+  listeners.forEach(listener => listener({...currentPalette}));
+};
 
 // Helper to check if a color is dark
 export function isColorDark(color: string): boolean {
@@ -59,12 +67,14 @@ export function updateWebsiteTheme(
       
       console.log("Using favicon colors for palette:", faviconPalette);
       currentPalette = { ...faviconPalette };
+      notifyListeners();
       return faviconPalette;
     }
   }
   
   // Use the regular palette
   currentPalette = { ...palette };
+  notifyListeners();
   return palette;
 }
 
@@ -88,12 +98,34 @@ export function shufflePalette(): WebsitePalette {
   
   // Update the current palette
   currentPalette = shuffled;
+  notifyListeners();
   return { ...currentPalette };
 }
 
 // React hook for using website palette
 export function useWebsitePalette() {
   const [palette, setPalette] = useState<WebsitePalette>(currentPalette);
+  
+  // Listen for global palette changes
+  useEffect(() => {
+    const handlePaletteChange = (newPalette: WebsitePalette) => {
+      setPalette({...newPalette});
+    };
+    
+    // Add listener
+    listeners.push(handlePaletteChange);
+    
+    // Initial sync
+    setPalette({...currentPalette});
+    
+    // Cleanup listener on unmount
+    return () => {
+      const index = listeners.indexOf(handlePaletteChange);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    };
+  }, []);
   
   const updatePalette = useCallback((newPalette: WebsitePalette, faviconColors?: string[]) => {
     const updatedPalette = updateWebsiteTheme(newPalette, faviconColors);

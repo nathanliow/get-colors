@@ -5,15 +5,14 @@ import {
   Input, 
   Button as ChakraButton, 
   Heading,
-  Box, 
   Text, 
-  Badge
+  Badge,
+  Stack
 } from "@chakra-ui/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ColorSwatch } from "@/components/ColorSwatch";
-import { updateWebsiteTheme, useWebsitePalette, WebsitePalette } from "@/lib/websiteTheme";
+import { updateWebsiteTheme, useWebsitePalette } from "@/lib/websiteTheme";
 import { WebsiteData } from "@/utils/interfaces";
 
 export default function Home() {
@@ -75,6 +74,8 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-8 gap-8">
+      {/* Top spacer, for some reason padding not working */}
+      <div className="h-20 w-full"></div>
       <h1 className="text-3xl font-bold">Website Color Extractor</h1>
       <div className="flex gap-2 w-full max-w-md">
         <Input
@@ -242,36 +243,41 @@ export default function Home() {
                     
                     {/* Badges */}
                     <div className="flex gap-4 mb-4">
-                      <Badge 
-                        style={{
-                          backgroundColor: palette.primary || websiteData.colors.palette.primary,
-                          color: palette.text || websiteData.colors.palette.text,
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: "0.375rem"
-                        }}
-                      >
-                        Primary Badge
-                      </Badge>
-                      <Badge 
-                        style={{
-                          backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
-                          color: palette.text || websiteData.colors.palette.text,
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: "0.375rem"
-                        }}
-                      >
-                        Secondary Badge
-                      </Badge>
-                      <Badge 
-                        style={{
-                          backgroundColor: palette.accent || websiteData.colors.palette.accent,
-                          color: palette.text || websiteData.colors.palette.text,
-                          padding: "0.25rem 0.75rem",
-                          borderRadius: "0.375rem"
-                        }}
-                      >
-                        Accent Badge
-                      </Badge>
+                      <Stack direction="column">
+                        <Badge 
+                          variant="outline"
+                          style={{
+                            backgroundColor: palette.primary || websiteData.colors.palette.primary,
+                            color: palette.text || websiteData.colors.palette.text,
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "0.375rem"
+                          }}
+                        >
+                          Primary Badge
+                        </Badge>
+                        <Badge 
+                          variant="outline"
+                          style={{
+                            backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
+                            color: palette.text || websiteData.colors.palette.text,
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "0.375rem"
+                          }}
+                        >
+                          Secondary Badge
+                        </Badge>
+                        <Badge 
+                          variant="outline"
+                          style={{
+                            backgroundColor: palette.accent || websiteData.colors.palette.accent,
+                            color: palette.text || websiteData.colors.palette.text,
+                            padding: "0.25rem 0.75rem",
+                            borderRadius: "0.375rem"
+                          }}
+                        >
+                          Accent Badge
+                        </Badge>
+                      </Stack>
                     </div>
                   </div>
                   
@@ -317,6 +323,9 @@ export default function Home() {
           </div>
         </motion.div>
       )}
+      
+      {/* Bottom spacer, for some reason padding not working */}
+      <div className="h-20 w-full"></div>
     </main>
   );
 }
