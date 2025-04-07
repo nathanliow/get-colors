@@ -78,6 +78,21 @@ export function updateWebsiteTheme(
   return palette;
 }
 
+// Function to update a specific color in the palette
+export function updatePaletteColor(key: keyof WebsitePalette, color: string): WebsitePalette {
+  currentPalette[key] = color;
+  
+  // If updating primary color and it's dark, adjust text color automatically
+  if (key === 'primary' && isColorDark(color)) {
+    currentPalette.text = "#ffffff";
+  } else if (key === 'primary' && !isColorDark(color)) {
+    currentPalette.text = "#000000";
+  }
+  
+  notifyListeners();
+  return { ...currentPalette };
+}
+
 // Function to get the current palette
 export function getWebsitePalette(): WebsitePalette {
   return { ...currentPalette };
@@ -132,6 +147,12 @@ export function useWebsitePalette() {
     setPalette({ ...updatedPalette });
   }, []);
   
+  const updateColor = useCallback((key: keyof WebsitePalette, color: string) => {
+    const updatedPalette = updatePaletteColor(key, color);
+    setPalette({ ...updatedPalette });
+    return updatedPalette;
+  }, []);
+  
   const shuffleColors = useCallback(() => {
     const shuffled = shufflePalette();
     setPalette({ ...shuffled });
@@ -141,6 +162,7 @@ export function useWebsitePalette() {
   return { 
     palette, 
     updatePalette, 
+    updateColor,
     shuffleColors
   };
 } 

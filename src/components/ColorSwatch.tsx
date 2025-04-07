@@ -1,10 +1,22 @@
-export const ColorSwatch = ({ color, label }: { color: string; label?: string }) => (
+export const ColorSwatch = ({ 
+  color, 
+  label, 
+  onSelect 
+}: { 
+  color: string; 
+  label?: string;
+  onSelect?: (color: string) => void;
+}) => (
   <div className="flex flex-col items-center">
     <div
       className="w-16 h-16 rounded-xl border cursor-pointer hover:opacity-80 relative group"
       style={{ backgroundColor: color }}
       onClick={() => {
-        navigator.clipboard.writeText(color);
+        if (onSelect) {
+          onSelect(color);
+        } else {
+          navigator.clipboard.writeText(color);
+        }
       }}
     >
       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
