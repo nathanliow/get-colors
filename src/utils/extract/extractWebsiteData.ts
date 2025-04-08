@@ -4,11 +4,23 @@ import { processCssColors } from "../process/processCSSColors";
 import { extractStylesFromHtml } from "./extractStylesFromHtml";
 import { fetchWebsiteContent } from "../fetch/fetchWebsiteContent";
 import { processFavicon } from "../process/processFavicon";
+import chromium from 'chrome-aws-lambda';
+import puppeteer from 'puppeteer-core';
 
 /**
  * Extract all website data including colors, favicon, and metadata
  */
 export async function extractWebsiteData(url: string): Promise<WebsiteData> {
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath,
+    headless: chromium.headless,
+  });
+
+  const page = await browser.newPage();
+  await page.goto(url, { waitUntil: 'networkidle2' });
+
   // Get website HTML and favicon
   const { html, faviconUrl, faviconBuffer } = await fetchWebsiteContent(url);
   
@@ -29,6 +41,8 @@ export async function extractWebsiteData(url: string): Promise<WebsiteData> {
   // Process CSS colors
   const { palette, cssColors } = processCssColors(styles);
   
+  await browser.close();
+
   return {
     title,
     description,
