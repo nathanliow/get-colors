@@ -1,11 +1,13 @@
 export const ColorSwatch = ({ 
   color, 
   label, 
-  onSelect 
+  onSelect,
+  isDarkTheme
 }: { 
   color: string; 
   label?: string;
   onSelect?: (color: string) => void;
+  isDarkTheme: boolean;
 }) => (
   <div className="flex flex-col items-center">
     <div
@@ -30,7 +32,7 @@ export const ColorSwatch = ({
           strokeWidth="2" 
           strokeLinecap="round" 
           strokeLinejoin="round" 
-          className="text-white drop-shadow-md"
+          className={`${isDarkTheme ? 'text-white' : 'text-black'} drop-shadow-md`}
         >
           <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
           <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
@@ -38,6 +40,6 @@ export const ColorSwatch = ({
       </div>
     </div>
     {label && <span className="mt-2 text-sm">{label}</span>}
-    <span className="text-xs text-white">{color}</span>
+    <span className={`text-xs ${isDarkTheme ? 'text-white' : 'text-black'}`}>{color}</span>
   </div>
 );

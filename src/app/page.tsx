@@ -3,18 +3,25 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Input, 
-  Button as ChakraButton, 
   Heading,
-  Text, 
-  Badge,
-  Stack,
-  Box
+  Box,
+  Spacer
 } from "@chakra-ui/react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { ColorSwatch } from "@/components/ColorSwatch";
 import { updateWebsiteTheme, useWebsitePalette } from "@/lib/websiteTheme";
 import { WebsiteData } from "@/utils/interfaces";
+import Buttons from "@/components/Buttons";
+import Badges from "@/components/Badges";
+import SecondaryCard from "@/components/SecondaryCard";
+import PrimaryCard from "@/components/PrimaryCard";
+import TimelineComponent from "@/components/TimelineComponent";
+import CustomSpinner from "@/components/Spinner";
+import SliderComponent from "@/components/SliderComponent";
+import RadioCardComponents from "@/components/RadioCardComponents";
+import ProgressComponent from "@/components/ProgressComponent";
+import AvatarComponent from "@/components/AvatarComponent";
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -25,6 +32,7 @@ export default function Home() {
   const { palette, updateColor, shuffleColors } = useWebsitePalette();
   const [isThemePaletteVisible, setIsThemePaletteVisible] = useState(false);
   const themePaletteRef = useRef<HTMLDivElement>(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
 
   // Update the theme when websiteData changes
   useEffect(() => {
@@ -58,12 +66,17 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
+      // Add https:// if not present
+      const formattedUrl = url.startsWith('http://') || url.startsWith('https://')
+        ? url
+        : `https://${url}`;
+
       const res = await fetch("/api/colors", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: formattedUrl }),
       });
       const data = await res.json();
       
@@ -102,7 +115,7 @@ export default function Home() {
   };
 
   return (
-    <>
+    <div className={`min-h-screen ${isDarkTheme ? 'bg-black text-white' : 'bg-white text-black'}`}>
       {/* Fixed Navbar */}
       {websiteData && (
         <Box 
@@ -112,13 +125,13 @@ export default function Home() {
           left="0" 
           right="0" 
           zIndex="999" 
-          bg="black" 
           py="3" 
           px="6" 
           boxShadow="md"
           display="flex"
           alignItems="center"
           justifyContent="space-between"
+          className={isDarkTheme ? 'bg-black' : 'bg-white'}
         >
           <Heading 
             as="h1" 
@@ -128,25 +141,53 @@ export default function Home() {
           >
             Get Colors
           </Heading>
-          <div className="flex gap-2 w-full max-w-md ml-auto">
-            <Input
-              placeholder="Enter website URL"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !loading) {
-                  fetchColors();
-                }
-              }}
-            />
-            <div className="flex hover:bg-gray-800 w-10 h-10 transition-colors justify-center items-center rounded-lg">
-              <Button 
-                onClick={fetchColors} 
-                disabled={loading}
-                className="cursor-pointer"
-              >
-                →
-              </Button>
+          <div className="flex items-center gap-4 w-full max-w-md ml-auto">
+            <Button
+              onClick={() => setIsDarkTheme(!isDarkTheme)}
+              className={`rounded-lg transition-colors cursor-pointer ${
+                isDarkTheme 
+                  ? 'hover:bg-gray-800 text-white' 
+                  : 'hover:bg-gray-100 text-black'
+              }`}
+            >
+              {isDarkTheme ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/>
+                  <line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/>
+                  <line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              )}
+            </Button>
+            <div className="flex gap-2 w-full">
+              <Input
+                placeholder="Enter website URL"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading) {
+                    fetchColors();
+                  }
+                }}
+              />
+              <div className="flex hover:bg-gray-800 w-10 h-10 transition-colors justify-center items-center rounded-lg">
+                <Button 
+                  onClick={fetchColors} 
+                  disabled={loading}
+                  className="cursor-pointer"
+                >
+                  →
+                </Button>
+              </div>
             </div>
           </div>
         </Box>
@@ -193,7 +234,9 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="w-full max-w-4xl space-y-8"
+            className={`w-full max-w-4xl space-y-8 ${
+              isDarkTheme ? 'bg-black text-white' : 'bg-white text-black'
+            }`}
           >
             <div className="text-center">
               <h2 className="text-2xl font-bold">{websiteData.title}</h2>
@@ -228,15 +271,18 @@ export default function Home() {
             {/* Current Theme Palette - Bottom Slide-up */}
             <motion.div 
               ref={themePaletteRef}
-              className="fixed left-0 right-0 bottom-0 p-4 rounded-t-lg shadow-lg border z-20 bg-black"
+              className={`fixed left-0 right-0 bottom-0 p-4 rounded-t-lg shadow-lg border z-20 ${
+                isDarkTheme ? 'bg-black text-white' : 'bg-white text-black'
+              }`}
               initial={{ y: "100%" }}
               animate={{ y: isThemePaletteVisible ? "0%" : "85%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
+              <div className={`w-full h-2 ${isDarkTheme ? 'bg-black' : 'bg-white'}`}/>
               <div className="flex justify-center mb-2">
                 <div className="w-10 h-1 bg-gray-300 rounded-full"/>
               </div>
-              <div className="w-20 h-6 bg-black"/>
+              <div className={`w-full h-6 ${isDarkTheme ? 'bg-black' : 'bg-white'}`}/>
               <div className="flex flex-row gap-4 justify-center overflow-x-auto pb-2">
                 {Object.entries(palette).map(([key, value]) => (
                   <div key={key} className="flex flex-col items-center gap-2 min-w-[80px]">
@@ -284,7 +330,7 @@ export default function Home() {
                 ))}
               </div>
               <div className="flex justify-center mt-3">
-                <div className="flex hover:bg-gray-800 w-32 transition-colors justify-center items-center rounded-lg">
+                <div className={`flex ${isDarkTheme ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} w-32 transition-colors justify-center items-center rounded-lg`}>
                   <Button 
                     onClick={handleRefreshColors}
                     className="cursor-pointer"
@@ -312,6 +358,7 @@ export default function Home() {
                           color={value} 
                           label={key} 
                           onSelect={selectedPaletteKey ? handleColorSelect : undefined}
+                          isDarkTheme={isDarkTheme}
                         />
                       )
                     ))
@@ -330,6 +377,7 @@ export default function Home() {
                             key={`favicon-${index}`} 
                             color={color} 
                             onSelect={selectedPaletteKey ? handleColorSelect : undefined}
+                            isDarkTheme={isDarkTheme}
                           />
                         )
                       ))}
@@ -349,6 +397,7 @@ export default function Home() {
                         key={`css-${index}`} 
                         color={color} 
                         onSelect={selectedPaletteKey ? handleColorSelect : undefined}
+                        isDarkTheme={isDarkTheme}
                       />
                     ))}
                   </div>
@@ -362,138 +411,62 @@ export default function Home() {
                 <div>
                   <h3 className="flex text-lg justify-center font-semibold mb-4">Chakra UI Components</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Cards */}
-                    <div className="border rounded-md overflow-hidden">
-                      <div 
-                        style={{
-                          backgroundColor: palette.primary || websiteData.colors.palette.primary,
-                          color: palette.text || websiteData.colors.palette.text,
-                          padding: "1rem"
-                        }}
-                      >
-                        <Heading size="md">Primary Card</Heading>
-                        <Text mt={2}>This is a card using the primary color.</Text>
+                    <PrimaryCard 
+                      palette={palette} 
+                      websiteData={websiteData}
+                    />
+
+                    <SecondaryCard 
+                      palette={palette} 
+                      websiteData={websiteData}
+                    />
+
+                    <TimelineComponent 
+                      palette={palette} 
+                      websiteData={websiteData}
+                    />
+
+                    <div className="flex flex-col gap-4">
+                      <Spacer/>
+                      <RadioCardComponents 
+                        palette={palette} 
+                        websiteData={websiteData}
+                      />
+                      <div className="flex flex-row gap-20">
+                        <Spacer/>
+                        <Buttons 
+                          palette={palette} 
+                          websiteData={websiteData}
+                        />
+
+                        <Badges 
+                          palette={palette} 
+                          websiteData={websiteData}
+                        />
+                        <Spacer/>
                       </div>
+                      <Spacer/>
                     </div>
                     
-                    <div className="border rounded-md overflow-hidden">
-                      <div 
-                        style={{
-                          backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
-                          color: palette.text || websiteData.colors.palette.text,
-                          padding: "1rem"
-                        }}
-                      >
-                        <Heading size="md">Secondary Card</Heading>
-                        <Text mt={2}>This is a card using the secondary color.</Text>
-                      </div>
+                    
+                  
+                    <div className="flex flex-col gap-6">
+                      <Spacer/>
+                      <SliderComponent 
+                        palette={palette} 
+                        websiteData={websiteData}
+                      />
+                      <ProgressComponent  
+                        palette={palette} 
+                        websiteData={websiteData}
+                      />
+                      <Spacer/>
                     </div>
                     
-                    {/* Buttons */}
-                    <div>
-                      <div className="flex gap-4 mb-4">
-                        <ChakraButton 
-                          style={{
-                            backgroundColor: palette.primary || websiteData.colors.palette.primary,
-                            color: palette.text || websiteData.colors.palette.text
-                          }}
-                        >
-                          Primary
-                        </ChakraButton>
-                        <ChakraButton 
-                          style={{
-                            backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
-                            color: palette.text || websiteData.colors.palette.text
-                          }}
-                        >
-                          Secondary
-                        </ChakraButton>
-                        <ChakraButton 
-                          style={{
-                            backgroundColor: palette.accent || websiteData.colors.palette.accent,
-                            color: palette.text || websiteData.colors.palette.text
-                          }}
-                        >
-                          Accent
-                        </ChakraButton>
-                      </div>
-                      
-                      {/* Badges */}
-                      <div className="flex gap-4 mb-4">
-                        <Stack direction="column">
-                          <Badge 
-                            variant="outline"
-                            style={{
-                              backgroundColor: palette.primary || websiteData.colors.palette.primary,
-                              color: palette.text || websiteData.colors.palette.text,
-                              padding: "0.25rem 0.75rem",
-                              borderRadius: "0.375rem"
-                            }}
-                          >
-                            Primary Badge
-                          </Badge>
-                          <Badge 
-                            variant="outline"
-                            style={{
-                              backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
-                              color: palette.text || websiteData.colors.palette.text,
-                              padding: "0.25rem 0.75rem",
-                              borderRadius: "0.375rem"
-                            }}
-                          >
-                            Secondary Badge
-                          </Badge>
-                          <Badge 
-                            variant="outline"
-                            style={{
-                              backgroundColor: palette.accent || websiteData.colors.palette.accent,
-                              color: palette.text || websiteData.colors.palette.text,
-                              padding: "0.25rem 0.75rem",
-                              borderRadius: "0.375rem"
-                            }}
-                          >
-                            Accent Badge
-                          </Badge>
-                        </Stack>
-                      </div>
-                    </div>
-                    
-                    {/* Combined component */}
-                    <div 
-                      className="border rounded-md p-5"
-                      style={{
-                        backgroundColor: palette.primary || websiteData.colors.palette.primary,
-                        color: palette.text || websiteData.colors.palette.text
-                      }}
-                    >
-                      <Heading size="sm" mb={2}>Component Card</Heading>
-                      <Text mb={4}>Combined components using palette colors</Text>
-                      <hr className="my-4" />
-                      <div className="flex items-center gap-4">
-                        <div 
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium"
-                          style={{
-                            backgroundColor: palette.accent || websiteData.colors.palette.accent,
-                            color: palette.text || websiteData.colors.palette.text
-                          }}
-                        >
-                          JD
-                        </div>
-                        <div>
-                          <Text fontWeight="bold">John Doe</Text>
-                          <Text fontSize="sm">Team Member</Text>
-                        </div>
-                        <ChakraButton 
-                          size="sm"
-                          style={{
-                            backgroundColor: palette.secondary || websiteData.colors.palette.secondary,
-                            color: palette.text || websiteData.colors.palette.text
-                          }}
-                        >
-                          View
-                        </ChakraButton>
-                      </div>
-                    </div>
+                    <AvatarComponent 
+                      palette={palette} 
+                      websiteData={websiteData}
+                    />
                   </div>
                 </div>
               </div>
@@ -504,6 +477,6 @@ export default function Home() {
         {/* Bottom spacer, for some reason padding not working */}
         <div className="h-48 w-full"></div>
       </main>
-    </>
+    </div>
   );
 }
