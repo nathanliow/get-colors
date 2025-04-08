@@ -12,9 +12,9 @@ import puppeteer from 'puppeteer-core';
  */
 export async function extractWebsiteData(url: string): Promise<WebsiteData> {
   const browser = await puppeteer.launch({
-    args: chromium.args,
+    args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath,
+    executablePath: await chromium.executablePath || '/usr/bin/chromium-browser',
     headless: chromium.headless,
   });
 
