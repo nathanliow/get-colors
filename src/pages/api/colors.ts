@@ -17,11 +17,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     // Launch browser with @sparticuz/chromium
     browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: true,
       ignoreHTTPSErrors: true,
+    });
+
+    // Add connection error handling
+    browser.on('disconnected', () => {
+      throw new Error('Browser was disconnected');
     });
 
     // Fetch website content and extract data
@@ -29,11 +34,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     res.status(200).json(websiteData);
   } catch (err) {
-    console.error(err);
+    console.error('Error in handler:', err);
     handleApiError(err, url, res);
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (closeErr) {
+        console.error('Error closing browser:', closeErr);
+      }
     }
   }
 }
