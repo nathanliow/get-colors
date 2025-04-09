@@ -10,12 +10,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { url } = req.body;
   if (!url) return res.status(400).json({ error: 'URL is required' });
 
+  let browser;
   try {
     // Configure chromium
     await chromium.font('https://raw.githack.com/googlei18n/noto-emoji/master/fonts/NotoColorEmoji.ttf');
     
     // Launch browser with @sparticuz/chromium
-    const browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
@@ -25,11 +26,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Fetch website content and extract data
     const websiteData = await extractWebsiteData(url, browser);
-    await browser.close();
     
     res.status(200).json(websiteData);
   } catch (err) {
     console.error(err);
     handleApiError(err, url, res);
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }
